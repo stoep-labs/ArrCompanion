@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+.local-emby/
+build-local.sh
+Directory.Build.targets
+.local-build-number

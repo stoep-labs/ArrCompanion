@@ -1,0 +1,698 @@
+<div id="ArrCompanionConfigPage" data-role="page" class="page type-interior pluginConfigurationPage hsc-no-arr"
+     data-require="emby-input,emby-button,emby-checkbox"
+     data-controller="__plugin/ArrCompanionJS">
+
+    <style>
+        /* Styles taken from Home Screen Companion's settings page (DESIGN.md there), so the two look alike. */
+        :root {
+                    --hsc-primary: #52B54B;
+                    --hsc-primary-hover: #5fc458;
+                    --hsc-primary-pressed: #3a8c34;
+                    --hsc-primary-text: #52B54B;
+                    --hsc-info-text: #5aa9e6;
+                    --hsc-activity: #00a4dc;
+                    --hsc-activity-hover: #22b4e6;
+                    --hsc-activity-text: #00a4dc;
+                    --hsc-warning: #e6c15a;
+                    --hsc-warning-text: #e6c15a;
+                    --hsc-danger: #e57373;
+                    --hsc-danger-text: #e57373;
+                    --hsc-danger-strong: #cc3333;
+                    --hsc-neutral: #9aa4b0;
+                    --hsc-tint-1: rgba(128,128,128,0.04);
+                    --hsc-tint-2: rgba(128,128,128,0.08);
+                    --hsc-tint-3: rgba(128,128,128,0.15);
+                    --hsc-hairline: var(--line-color, rgba(128,128,128,0.2));
+                    --hsc-hairline-strong: rgba(128,128,128,0.3);
+                    --hsc-focus: rgba(82,181,75,0.5);
+                    --hsc-shadow-float: 0 4px 16px rgba(0,0,0,0.35);
+                    --hsc-shadow-modal: 0 24px 48px rgba(0,0,0,0.45);
+                    /* Category icon colours (type chips: the chip is neutral, only its icon is coloured) */
+                    --hsc-cat-tag: #9aa4b0;
+                    --hsc-cat-collection: #9b7fd4;
+                    --hsc-cat-playlist: #3cbfa0;
+                    --hsc-cat-toplist: #d4b45a;
+                    --hsc-cat-imported: #e09550;
+                    --hsc-cat-movies: #b8a28c;
+                    --hsc-cat-shows: #a29dbb;
+                    /* The "Advanced" badge: a highlight, not a warning; a hue used nowhere else. */
+                    --hsc-advanced: #c07ad6;
+                    --hsc-advanced-border: rgba(192,122,214,0.4);
+                    --hsc-art-tile: #26262b;  /* dark tile behind white font samples, same in both themes */
+                    /* The chosen AND / OR (ALL / ANY) in Smart Playlist filters: soft blue and orange. */
+                    --hsc-op-and-bg: rgba(90,169,230,0.2);
+                    --hsc-op-and-text: #8fc3ec;
+                    --hsc-op-or-bg: rgba(224,149,80,0.2);
+                    --hsc-op-or-text: #ebb27f;
+                }
+        html[data-plugin-theme="light"] {
+                    --hsc-primary-text: #3a8c34;
+                    --hsc-info-text: #2b6cb0;
+                    --hsc-activity-text: #007ba8;
+                    --hsc-warning-text: #9a7a12;
+                    --hsc-danger-text: #cc3333;
+                    --hsc-shadow-float: 0 4px 16px rgba(0,0,0,0.18);
+                    --hsc-shadow-modal: 0 24px 48px rgba(0,0,0,0.25);
+                    --hsc-cat-tag: #6b7580;
+                    --hsc-cat-collection: #6f45b5;
+                    --hsc-cat-playlist: #1f8c74;
+                    --hsc-cat-toplist: #8f7224;
+                    --hsc-cat-imported: #b0661c;
+                    --hsc-cat-movies: #806a55;
+                    --hsc-cat-shows: #6b668a;
+                    --hsc-advanced: #8a3aa3;
+                    --hsc-advanced-border: rgba(138,58,163,0.35);
+                    --hsc-op-and-bg: rgba(43,108,176,0.12);
+                    --hsc-op-and-text: #2b6cb0;
+                    --hsc-op-or-bg: rgba(176,102,28,0.13);
+                    --hsc-op-or-text: #9a5714;
+                }
+        #ArrCompanionConfigPage button:not([is]):focus-visible,
+        .modal-backdrop button:not([is]):focus-visible,
+        #ArrCompanionConfigPage [tabindex]:focus-visible {
+                    outline: 2px solid var(--hsc-focus);
+                    outline-offset: 2px;
+                }
+        @media (prefers-reduced-motion: reduce) {
+            #ArrCompanionConfigPage *,
+            #ArrCompanionConfigPage *::before,
+            #ArrCompanionConfigPage *::after,
+            .modal-backdrop,
+            .modal-backdrop * {
+                        animation-duration: 0.01ms !important;
+                        animation-iteration-count: 1 !important;
+                        transition-duration: 0.01ms !important;
+                    }
+        }
+        .api-key-field:not(.api-key-shown) { -webkit-text-security: disc; text-security: disc; }
+        .advanced-section {
+                    background: var(--theme-background-level2);
+                    border: 1px solid var(--hsc-hairline);
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    overflow: hidden;
+                }
+        .advanced-header {
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    color: var(--theme-text-primary);
+                    user-select: none;
+                    transition: background-color 0.15s;
+                }
+        .advanced-header:hover {
+                        background: var(--hsc-tint-2);
+                    }
+        .advanced-header .settings-panel-chevron { color: var(--theme-text-secondary); }
+        .advanced-body {
+                    padding: 16px 24px 20px;
+                    display: none;
+                    border-top: 1px solid var(--hsc-hairline);
+                    color: var(--theme-text-primary);
+                    background: var(--theme-background-level1);
+                }
+        .advanced-section .advanced-section {
+                    border-radius: 6px;
+                    background: var(--theme-background-level2);
+                }
+        .floating-actions {
+                    position: fixed;
+                    bottom: 62px;
+                    right: 30px;
+                    z-index: 9000;
+                    display: flex;
+                    gap: 15px;
+                }
+        .fab-btn {
+                    box-shadow: var(--hsc-shadow-float) !important;
+                    height: 44px !important;
+                    border-radius: 8px !important;
+                    padding: 0 18px !important;
+                    white-space: nowrap;
+                }
+        #ArrCompanionConfigPage .emby-button,
+        .modal-backdrop .emby-button {
+                    border-radius: 8px;
+                    text-transform: none;
+                    letter-spacing: 0;
+                    font-weight: 500;
+                }
+        .btn-save,
+        .hsc-btn-primary {
+                    background-color: var(--hsc-primary) !important;
+                    color: #fff !important;
+                    border: 1px solid transparent !important;
+                }
+        .btn-save:hover,
+        .hsc-btn-primary:hover { background-color: var(--hsc-primary-hover) !important; }
+        .btn-save:active,
+        .hsc-btn-primary:active { background-color: var(--hsc-primary-pressed) !important; }
+        .btn-neutral,
+        .hsc-btn-secondary {
+                    background: var(--hsc-tint-1) !important;
+                    border: 1px solid var(--hsc-hairline-strong) !important;
+                    color: var(--theme-text-primary) !important;
+                    box-shadow: none !important;
+                }
+        .btn-neutral:hover,
+        .hsc-btn-secondary:hover { background: var(--hsc-tint-2) !important; }
+        .btn-neutral:active,
+        .hsc-btn-secondary:active { background: var(--hsc-tint-3) !important; }
+        .btn-neutral:disabled,
+        .hsc-btn-secondary:disabled { opacity: 0.5; }
+        .hsc-btn-ghost {
+                    background: transparent !important;
+                    border: 1px solid transparent !important;
+                    color: var(--theme-text-secondary) !important;
+                    box-shadow: none !important;
+                    min-width: 0 !important;
+                }
+        .hsc-btn-ghost:hover { background: var(--hsc-tint-2) !important; color: var(--theme-text-primary) !important; }
+        .hsc-mbtn {
+                    cursor: pointer;
+                    border-radius: 8px;
+                    padding: 8px 16px;
+                    font-family: inherit;
+                    font-size: 0.9em;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    transition: background-color 0.15s, border-color 0.15s;
+                }
+        .hsc-mbtn.hsc-btn-secondary { color: inherit !important; border-color: var(--plugin-popup-border, var(--hsc-hairline-strong)) !important; }
+        .hsc-mbtn:disabled { opacity: 0.5; cursor: default; }
+        .btn-bug-trigger,
+        .btn-help-trigger {
+                    background: var(--hsc-tint-1) !important;
+                    color: var(--theme-text-primary) !important;
+                    padding: 0 12px !important;
+                    height: 32px !important;
+                    border-radius: 8px !important;
+                    margin-left: 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 0.88em !important;
+                    font-weight: 500 !important;
+                    border: 1px solid var(--hsc-hairline-strong) !important;
+                    box-shadow: none !important;
+                    transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+                }
+        .btn-bug-trigger .md-icon,
+        .btn-help-trigger .md-icon {
+                    font-size: 1.15em;
+                    color: var(--theme-text-secondary);
+                }
+        .btn-bug-trigger:hover,
+        .btn-help-trigger:hover {
+                    background: var(--hsc-tint-2) !important;
+                }
+        .hsc-top-row { max-width: 900px; }
+        .modal-backdrop {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.6);
+                    z-index: 99999;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s ease;
+                }
+        .modal-visible {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+        .modal-content {
+                    background-color: var(--plugin-popup-bg, #2a2a2a) !important;
+                    color: var(--plugin-popup-color, #e8e8e8) !important;
+                    padding: 0;
+                    border-radius: 12px;
+                    max-width: 650px;
+                    width: 90%;
+                    box-shadow: var(--hsc-shadow-modal);
+                    border: 1px solid var(--plugin-popup-border, rgba(255,255,255,0.15));
+                    position: relative;
+                    transform: translateY(12px);
+                    transition: transform 0.25s ease-out;
+                    overflow: hidden;
+                }
+        .modal-visible .modal-content {
+                    transform: translateY(0);
+                }
+        .modal-header-bar {
+                    background: transparent;
+                    padding: 16px 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    color: var(--plugin-popup-color, inherit);
+                    border-bottom: 1px solid var(--plugin-popup-border, var(--hsc-hairline));
+                }
+        .modal-header-icon {
+                    font-size: 1.5em !important;
+                    color: var(--hsc-primary-text);
+                    flex-shrink: 0;
+                }
+        .modal-header-title {
+                    font-size: 1.05em;
+                    font-weight: 600;
+                    line-height: 1.3;
+                    letter-spacing: -0.1px;
+                    margin: 0;
+                }
+        .modal-header-sub {
+                    display: block;
+                    margin-top: 2px;
+                    font-size: 0.85em;
+                    color: var(--plugin-popup-muted, inherit);
+                }
+        .modal-header-close {
+                    margin-left: auto;
+                    flex-shrink: 0;
+                    background: transparent;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 8px;
+                    line-height: 1;
+                    color: var(--plugin-popup-muted, inherit);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+        .modal-header-close:hover { color: var(--plugin-popup-color, inherit); background: var(--plugin-popup-hover, var(--hsc-tint-2)); }
+        .modal-header-close .md-icon { font-size: 1.4em; }
+        .modal-body-scroll {
+                    padding: 24px;
+                    overscroll-behavior: contain;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                }
+        .step-text {
+                    color: var(--plugin-popup-color, #e8e8e8);
+                    font-size: 1em;
+                    line-height: 1.6;
+                }
+        .help-nav-link {
+                    color: var(--theme-text-secondary);
+                    text-decoration: none;
+                    font-size: 0.88em;
+                    transition: color 0.15s;
+                }
+        .help-nav-link:hover {
+                    color: var(--theme-text-primary);
+                }
+        .help-nav-link.active {
+                    color: var(--hsc-primary-text);
+                    font-weight: 600;
+                }
+        .help-link {
+                    color: var(--hsc-primary-text);
+                    text-decoration: none;
+                    font-weight: 600;
+                }
+        .help-link:hover {
+                        text-decoration: underline;
+                        text-underline-offset: 2px;
+                    }
+        .info-box {
+                    margin-top: 8px;
+                    padding: 12px;
+                    background: var(--hsc-tint-1);
+                    border-radius: 6px;
+                    font-size: 0.88em;
+                    line-height: 1.5;
+                    border: 1px solid var(--plugin-popup-border, var(--hsc-hairline));
+                }
+        .hsc-callout { display: flex; align-items: flex-start; gap: 8px; padding: 12px; border-radius: 6px; font-size: 0.88em; line-height: 1.5; border: 1px solid var(--hsc-hairline); background: var(--hsc-tint-1); }
+        .hsc-callout > .md-icon { font-size: 1.15em; flex-shrink: 0; margin-top: 1px; }
+        .hsc-callout.warning { background: rgba(230,193,90,0.08); border-color: rgba(230,193,90,0.3); }
+        .hsc-callout.warning > .md-icon { color: var(--hsc-warning-text); }
+        .hsc-callout.danger { background: rgba(229,115,115,0.08); border-color: rgba(229,115,115,0.3); }
+        .hsc-callout.danger > .md-icon { color: var(--hsc-danger-text); }
+        .hsc-callout.success { background: rgba(82,181,75,0.08); border-color: rgba(82,181,75,0.3); }
+        .hsc-callout.success > .md-icon { color: var(--hsc-primary-text); }
+        .simple-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    text-decoration: none;
+                    color: var(--theme-text-secondary) !important;
+                    font-size: 0.9em;
+                    font-weight: 500;
+                    transition: color 0.2s ease, opacity 0.2s ease;
+                    opacity: 0.8;
+                }
+        .simple-link:hover {
+                        color: var(--theme-text-primary) !important;
+                        opacity: 1;
+                    }
+        .simple-link img {
+                        height: 20px;
+                        width: auto;
+                        vertical-align: middle;
+                    }
+        .page-tab-nav {
+                    display: flex;
+                    gap: 0;
+                    border-bottom: 1px solid var(--hsc-hairline);
+                    padding: 0;
+                    background: transparent;
+                }
+        .page-tab-nav { margin-bottom: 24px; }
+        .page-tab-btn {
+                    background: transparent;
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    border-radius: 0;
+                    margin-bottom: -1px;
+                    padding: 10px 16px;
+                    cursor: pointer;
+                    font-family: inherit;
+                    font-size: 0.9em;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    letter-spacing: 0;
+                    text-transform: none;
+                    color: var(--theme-text-secondary);
+                    transition: color 0.15s, border-color 0.15s;
+                    white-space: nowrap;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    user-select: none;
+                }
+        .page-tab-btn .tab-icon { font-size: 1.15em !important; }
+        .page-tab-btn:hover { color: var(--theme-text-primary); }
+        .page-tab-btn.active {
+                    color: var(--theme-text-primary);
+                    border-bottom-color: var(--hsc-primary);
+                }
+        .hsc-card {
+                    background: var(--theme-background-level2);
+                    border: 1px solid var(--line-color);
+                    border-radius: 8px;
+                    padding: 24px;
+                    margin-bottom: 20px;
+                }
+        .hsc-section-title,
+        .hsc-title {
+                    font-size: 1.05em;
+                    font-weight: 600;
+                    line-height: 1.3;
+                    letter-spacing: -0.1px;
+                    color: var(--theme-text-primary);
+                    text-transform: none;
+                }
+        .hsc-section-title { margin: 0 0 8px 0; }
+        .hsc-section-title + .textMuted,
+        .hsc-section-title + p { margin-top: 0; }
+        .hsc-eyebrow {
+                    font-size: 0.75em;
+                    font-weight: 600;
+                    line-height: 1.3;
+                    letter-spacing: 0.6px;
+                    text-transform: uppercase;
+                    color: var(--theme-text-secondary);
+                }
+        .hsc-label {
+                    font-size: 0.88em;
+                    font-weight: 500;
+                    line-height: 1.3;
+                    color: var(--theme-text-secondary);
+                }
+        .hsc-panel-icon { margin-right: 10px; color: var(--theme-text-secondary); }
+        .btnTcRefresh {
+                    cursor: pointer;
+                    border-radius: 6px !important;
+                    padding: 4px 12px !important;
+                    font-family: inherit;
+                    font-size: 0.82em !important;
+                    font-weight: 500;
+                    transition: background-color 0.15s, border-color 0.15s;
+                }
+        .btnTcRefresh:hover { background: var(--hsc-tint-2) !important; }
+        .help-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 1.05em;
+                    font-weight: 600;
+                    letter-spacing: -0.1px;
+                    color: var(--plugin-popup-color, inherit);
+                    margin: 28px 0 12px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid var(--plugin-popup-border, var(--hsc-hairline));
+                }
+        .help-section-icon { font-size: 1.15em !important; color: var(--plugin-popup-muted, inherit); }
+        .help-feature-row {
+                    display: flex;
+                    gap: 11px;
+                    align-items: flex-start;
+                    margin-bottom: 9px;
+                    font-size: 0.92em;
+                    color: var(--plugin-popup-color, #e8e8e8);
+                    line-height: 1.5;
+                }
+        .help-feat-icon {
+                    font-size: 1em !important;
+                    color: var(--plugin-popup-muted, inherit);
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+        #ArrCompanionConfigPage .verticalSection {
+                    padding-bottom: 60px;
+                }
+
+
+        /* Footer (HSC's configPage.js footer styles) */
+        #ArrCompanionConfigPage .plugin-footer {
+            position: fixed; bottom: 0; left: var(--plugin-footer-left, 0); right: 0; z-index: 200;
+            background: var(--plugin-footer-bg); color: var(--plugin-popup-muted);
+            height: 50px; padding: 0 28px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9em; border-top: 1px solid var(--line-color); box-sizing: border-box;
+        }
+        #ArrCompanionConfigPage .plugin-footer .footer-version { color: var(--theme-text-secondary); }
+        #ArrCompanionConfigPage .plugin-footer .footer-sep { margin: 0 12px; opacity: 0.35; }
+        #ArrCompanionConfigPage .plugin-footer .footer-update-link { color: var(--hsc-warning-text); text-decoration: none; font-weight: bold; }
+        #ArrCompanionConfigPage .plugin-footer .simple-link { font-size: 1em; transition: none; transform: none; }
+
+        /* ArrCompanion only */
+        #ArrCompanionConfigPage .ac-state { color: var(--theme-text-secondary); padding: 8px 0; }
+        /* Missing tab: the Stoep fork's (4.4.2) Missing tab. Prefixed acm-/acs-: HSC's page uses mt-/stm-. */
+        .acs-chip { cursor: pointer; border: 1px solid var(--plugin-popup-border, rgba(255,255,255,0.12)); background: transparent; color: inherit; border-radius: 9999px; padding: 4px 12px; font-family: inherit; font-size: 0.85em; display: inline-flex; align-items: center; gap: 6px; }
+        .acs-chip:hover { background: var(--plugin-popup-hover, rgba(255,255,255,0.08)); }
+        .acs-chip.active { background: var(--plugin-popup-badge, rgba(255,255,255,0.1)); border-color: var(--plugin-popup-muted, currentColor); }
+        .acs-chip .md-icon { font-size: 1.1em; }
+        .acs-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; }
+        .acs-row:hover { background: var(--plugin-popup-hover, rgba(255,255,255,0.08)); }
+        .acs-rank { width: 2em; text-align: right; font-size: 0.85em; color: var(--plugin-popup-muted, #aaa); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+        .acs-poster { width: 34px; height: 50px; border-radius: 4px; flex-shrink: 0; background: var(--plugin-popup-bg2, #333) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--plugin-popup-muted, #aaa); }
+        .acs-poster .md-icon { font-size: 18px; opacity: 0.6; }
+        .acs-info { flex: 1; min-width: 0; }
+        .acs-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acs-meta { font-size: 0.8em; color: var(--plugin-popup-muted, #aaa); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acs-meta a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+        .acs-meta a:hover { color: var(--hsc-activity-text); }
+        .acs-arr { flex-shrink: 0; height: 30px; padding: 0 11px 0 8px; border-radius: 15px; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em; font-family: inherit; color: inherit; background: transparent; border: 1px solid var(--plugin-popup-border, var(--hsc-hairline-strong)); cursor: pointer; }
+        .acs-arr .md-icon { font-size: 16px; }
+        .acs-arr.add:hover { background: var(--plugin-popup-hover, var(--hsc-tint-2)); border-color: var(--hsc-primary); }
+        .acs-arr.add .md-icon { color: var(--hsc-primary-text); }
+        .acs-arr.in { background: rgba(82,181,75,0.15); color: var(--hsc-primary-text); border-color: transparent; cursor: default; }
+        .acs-arr[disabled]:not(.in) { opacity: 0.5; cursor: default; padding: 0 6px; }
+        .acm-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 2em 0 1em; }
+        .acm-head h2 { margin: 0; }
+        .acm-count { color: var(--theme-text-secondary); font-size: 0.9em; }
+        .acm-checked { margin-left: auto; color: var(--theme-text-secondary); font-size: 0.8em; }
+        .acm-head h2 + .acm-refresh { margin-left: auto; }
+        .acm-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+        .acm-controls input, .acm-controls select { padding: 7px 10px; font-size: 0.9em; font-family: inherit; color: inherit; background: var(--hsc-tint-1, rgba(128,128,128,0.06)); border: 1px solid var(--line-color); border-radius: 8px; }
+        .acm-controls select option { color: #000; }
+        .acm-search { flex: 1; min-width: 180px; }
+        .acm-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .acm-bar .acs-chip { border-color: var(--line-color); }
+        .acm-bar .acs-chip.active { background: rgba(128,128,128,0.15); border-color: var(--theme-text-secondary); }
+        .acm-view { margin-left: auto; display: inline-flex; border: 1px solid var(--line-color); border-radius: 8px; padding: 2px; background: rgba(128,128,128,0.04); }
+        .acm-view button { background: transparent; border: none; color: var(--theme-text-secondary); cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 0; }
+        .acm-view button.active { background: var(--theme-background-level3, rgba(128,128,128,0.15)); color: var(--theme-text-primary); }
+        .acm-list { border: 1px solid var(--line-color); border-radius: 8px; background: var(--theme-background-level2, transparent); padding: 4px; }
+        .acm-list .acs-row + .acs-row { border-top: 1px solid var(--line-color); border-radius: 0; }
+        .acm-list .acs-row:hover { background: rgba(128,128,128,0.08); }
+        .acm-list .acs-rank, .acm-list .acs-meta { color: var(--theme-text-secondary); }
+        .acm-list .acs-poster { width: 40px; height: 60px; background-color: rgba(128,128,128,0.15); color: var(--theme-text-secondary); }
+        .acm-list .acs-title { white-space: normal; }
+        .acm-norank .acs-rank { display: none; }
+        .acm-lists { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+        .acm-src { font-size: 0.75em; padding: 1px 7px; border-radius: 4px; background: rgba(128,128,128,0.15); color: var(--theme-text-secondary); white-space: nowrap; }
+        .acm-src b { font-weight: 600; color: var(--theme-text-primary); }
+        .acm-list .acs-arr { border-color: var(--hsc-hairline-strong, rgba(128,128,128,0.3)); }
+        .acm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
+        .acm-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .acm-card .acm-cover { position: relative; aspect-ratio: 2 / 3; border-radius: 8px; background: rgba(128,128,128,0.15) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--theme-text-secondary); text-decoration: none; }
+        .acm-card .acm-cover .md-icon { font-size: 2em; opacity: 0.6; }
+        .acm-card .acm-rank { position: absolute; top: 6px; left: 6px; font-size: 0.75em; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: rgba(0,0,0,0.65); color: #fff; }
+        .acm-card .acm-ctitle { font-size: 0.85em; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+        .acm-card .acm-cmeta { font-size: 0.75em; color: var(--theme-text-secondary); }
+        .acm-card .acs-arr { align-self: flex-start; }
+        .acm-empty { text-align: center; padding: 30px; color: var(--theme-text-secondary); }
+        .hsc-no-arr .acm-arr, .hsc-no-arr #mtArrError { display: none !important; }
+    </style>
+
+    <div class="content-primary">
+        <div class="verticalSection">
+            <div class="hsc-top-row" style="display:flex; align-items:center; flex-wrap:wrap; margin-bottom: 10px; gap: 10px;">
+                <button type="button" is="emby-button" class="btn-help-trigger" id="btnOpenHelp" title="Open Help">
+                    <i class="md-icon">help</i>
+                    <span>Help</span>
+                </button>
+            </div>
+
+            <div class="page-tab-nav" id="pageTabNav">
+                <button class="page-tab-btn active" data-page-tab="Missing">
+                    <i class="md-icon tab-icon">playlist_remove</i>Missing
+                </button>
+                <button class="page-tab-btn" data-page-tab="Settings">
+                    <i class="md-icon tab-icon">settings</i>Settings
+                </button>
+            </div>
+
+            <div id="tabMissing" class="page-tab-content">
+                <div id="missingContainer" style="max-width:900px;"></div>
+            </div>
+
+            <div id="tabSettings" class="page-tab-content" style="display:none; max-width:900px;">
+
+                <div class="advanced-section settings-panel" style="margin-bottom: 15px;">
+                    <div class="advanced-header settings-panel-toggle">
+                        <i class="md-icon hsc-panel-icon">cloud_download</i>
+                        <span class="hsc-title">Sonarr &amp; Radarr</span>
+                        <i class="md-icon settings-panel-chevron" style="margin-left: auto; transition: transform 0.2s; transform: rotate(180deg);">expand_more</i>
+                    </div>
+                    <div class="advanced-body settings-panel-body" style="display:block; padding-top: 4px;">
+
+                        <div class="hsc-eyebrow" style="margin-bottom: 8px;">Servers</div>
+
+                        <!-- Sonarr -->
+                        <div class="advanced-section settings-panel" style="margin-bottom: 8px;">
+                            <div class="advanced-header settings-panel-toggle" style="padding: 10px 14px;">
+                                <i class="md-icon" style="margin-right: 8px; font-size: 1.1em; opacity: 0.65;">cloud_download</i>
+                                <span style="font-size: 0.95em; font-weight: 600;">Sonarr</span>
+                                <i class="md-icon settings-panel-chevron" style="margin-left: auto; transition: transform 0.2s; font-size: 1.1em; opacity: 0.65;">expand_more</i>
+                            </div>
+                            <div class="settings-panel-body" style="display:none; padding: 0 14px 14px;">
+                                <div class="inputContainer">
+                                    <input is="emby-input" type="text" id="txtSonarrUrl" label="Sonarr Server URL" placeholder="http://localhost:8989" autocomplete="off" spellcheck="false" />
+                                </div>
+                                <div class="inputContainer" style="margin-top: 12px;">
+                                    <input is="emby-input" type="text" class="api-key-field" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore id="txtSonarrApiKey" label="Sonarr API Key" />
+                                    <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.85em; opacity:0.75; margin-top:4px; cursor:pointer;">
+                                        <input type="checkbox" class="chkShowApiKey" data-target="txtSonarrApiKey" style="margin:0;" /> Show
+                                    </label>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                    <button type="button" is="emby-button" class="raised btn-neutral btnTestArr" data-kind="sonarr"><i class="md-icon" style="margin-right:5px;">wifi_tethering</i><span>Test Connection</span></button>
+                                    <span class="arr-test-result" data-kind="sonarr" style="font-size:0.85em;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Radarr -->
+                        <div class="advanced-section settings-panel" style="margin-bottom: 8px;">
+                            <div class="advanced-header settings-panel-toggle" style="padding: 10px 14px;">
+                                <i class="md-icon" style="margin-right: 8px; font-size: 1.1em; opacity: 0.65;">cloud_download</i>
+                                <span style="font-size: 0.95em; font-weight: 600;">Radarr</span>
+                                <i class="md-icon settings-panel-chevron" style="margin-left: auto; transition: transform 0.2s; font-size: 1.1em; opacity: 0.65;">expand_more</i>
+                            </div>
+                            <div class="settings-panel-body" style="display:none; padding: 0 14px 14px;">
+                                <div class="inputContainer">
+                                    <input is="emby-input" type="text" id="txtRadarrUrl" label="Radarr Server URL" placeholder="http://localhost:7878" autocomplete="off" spellcheck="false" />
+                                </div>
+                                <div class="inputContainer" style="margin-top: 12px;">
+                                    <input is="emby-input" type="text" class="api-key-field" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore id="txtRadarrApiKey" label="Radarr API Key" />
+                                    <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.85em; opacity:0.75; margin-top:4px; cursor:pointer;">
+                                        <input type="checkbox" class="chkShowApiKey" data-target="txtRadarrApiKey" style="margin:0;" /> Show
+                                    </label>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                    <button type="button" is="emby-button" class="raised btn-neutral btnTestArr" data-kind="radarr"><i class="md-icon" style="margin-right:5px;">wifi_tethering</i><span>Test Connection</span></button>
+                                    <span class="arr-test-result" data-kind="radarr" style="font-size:0.85em;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="floating-actions">
+                <button is="emby-button" type="button" class="raised button-submit fab-btn btn-save" disabled style="opacity:0.5;">
+                    <i class="md-icon" style="margin-right:5px;">save</i><span>Save Settings</span>
+                </button>
+            </div>
+
+        </div>
+
+        <div class="plugin-footer">
+            <span class="footer-version" id="footerVersionText"></span>
+            <span class="footer-sep" id="acFooterUpdateSep" style="display:none;">·</span>
+            <span id="acFooterUpdateInfo"></span>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/stoep-labs/ArrCompanion" target="_blank" class="simple-link">
+                <svg viewBox="0 0 16 16" width="1.3em" height="1.1em" style="vertical-align:middle;" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </div>
+
+    <div id="helpModalOverlay" class="modal-backdrop">
+        <div class="modal-content" style="max-width:720px;">
+            <div class="modal-header-bar">
+                <i class="md-icon modal-header-icon">school</i>
+                <div>
+                    <h2 class="modal-header-title">ArrCompanion — Help</h2>
+                    <span class="modal-header-sub">Sonarr &amp; Radarr for Home Screen Companion's missing titles</span>
+                </div>
+                <button type="button" class="modal-header-close" data-close="btnCloseHelp" aria-label="Close" title="Close"><i class="md-icon">close</i></button>
+            </div>
+            <div class="modal-body-scroll">
+                <div class="info-box" style="margin:0 0 20px;padding:12px 16px;font-size:0.92em;line-height:1.6;">
+                    <strong>What does this plugin do?</strong><br>
+                    <a href="https://github.com/soderlund91/HomeScreenCompanion" target="_blank" class="help-link">Home Screen Companion</a> (4.5 or later) lists the titles on your External and AI lists that are not in your library, when its <em>Settings › Show missing titles</em> is on. ArrCompanion shows that list with each title's state in Sonarr or Radarr, and adds the ones you pick.
+                </div>
+
+                <div class="help-section" style="margin-top:0;">
+                    <i class="md-icon help-section-icon">playlist_remove</i>
+                    <span>Missing</span>
+                </div>
+                <div class="step-text" style="margin-bottom:12px;font-size:0.92em;line-height:1.6;">
+                    <p style="margin:0 0 8px;">Movies and shows are listed as Home Screen Companion has them: poster, title, year, IMDb id and the lists each one is on. A title on several lists is shown once. Search by title or IMDb id, show one source, sort by rank, title, year or number of sources, pick All / Movies / Shows, and switch between the list and posters. The list is made during Home Screen Companion's sync; <em>Refresh</em> reads it again. Posters come from Emby's own metadata search (e.g. TheMovieDb).</p>
+                    <p style="margin:0 0 8px;"><strong>Rank</strong> — a title's place on its list, once Home Screen Companion sends it.</p>
+                    <p style="margin:0;">With Sonarr or Radarr saved, a title that is already there shows <em>✓ Radarr</em> / <em>✓ Sonarr</em> (point at it for monitored, downloaded and episodes). A title that is not there gets <em>+ Radarr</em> / <em>+ Sonarr</em>: pick the root folder and quality profile (Radarr also minimum availability and Monitored) and it is added, monitored, with a search for it. Shows are matched and added by their TVDb id (else IMDb id), movies by their IMDb id (else TMDb id).</p>
+                </div>
+
+                <div class="help-section">
+                    <i class="md-icon help-section-icon">settings</i>
+                    <span>Settings</span>
+                </div>
+                <div class="step-text" style="margin-bottom:12px;font-size:0.92em;line-height:1.6;">
+                    <p style="margin:0;"><strong>Sonarr &amp; Radarr</strong> — each server's URL and API key (in Sonarr / Radarr under Settings › General). <em>Test Connection</em> shows the version. A saved key is only sent to its saved URL. The plugin talks to Sonarr and Radarr itself, so they need not be reachable from the browser.</p>
+                </div>
+
+                <div style="text-align:right;margin-top:24px;padding-top:16px;border-top:1px solid var(--plugin-popup-border);">
+                    <button is="emby-button" type="button" id="btnCloseHelp" class="raised hsc-btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
