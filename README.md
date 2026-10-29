@@ -1,5 +1,7 @@
 # ArrCompanion
 
+<p align="center"><img src="ArrCompanion/thumb.png" alt="ArrCompanion" width="480"></p>
+
 An Emby plugin that sends the missing titles of [Home Screen Companion](https://github.com/soderlund91/HomeScreenCompanion) to Sonarr and Radarr.
 
 Home Screen Companion (HSC) lists the titles on your External and AI lists that are not in your library. ArrCompanion shows that list, with each title's state in Sonarr or Radarr, and adds the ones you pick:
