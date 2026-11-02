@@ -1,5 +1,7 @@
 # ArrCompanion
 
+> **This repository is archived.** ArrCompanion now lives at **[soderlund91/ArrCompanion](https://github.com/soderlund91/ArrCompanion)**. Please use that one for releases, issues and updates.
+
 <p align="center"><img src="ArrCompanion/thumb.png" alt="ArrCompanion" width="480"></p>
 
 An Emby plugin that sends the missing titles of [Home Screen Companion](https://github.com/soderlund91/HomeScreenCompanion) to Sonarr and Radarr.
